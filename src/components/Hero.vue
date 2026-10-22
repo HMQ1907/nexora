@@ -5,15 +5,14 @@
     <div class="glow"></div>
 
     <div class="hero__content container">
-      <p class="eyebrow hero__eyebrow"><span ref="eyebrow">DIGITAL EXPERIENCE STUDIO — EST. SÀI GÒN</span></p>
+      <p class="eyebrow hero__eyebrow"><span ref="eyebrow">DIGITAL EXPERIENCE STUDIO — GIẢI PHÁP A → Z</span></p>
       <h1 class="hero__title">
-        <span class="line"><span class="li">Kiến tạo website</span></span>
-        <span class="line"><span class="li">đẳng cấp <em>hi-tech</em></span></span>
-        <span class="line"><span class="li">từ A <i class="az-arrow">→</i> Z.</span></span>
+        <span class="line"><span class="li">Kiến tạo</span></span>
+        <span class="line"><span class="li">trải nghiệm <em>số.</em></span></span>
       </h1>
       <p class="lead hero__lead">
-        Nexora đồng hành cùng doanh nghiệp từ chiến lược, thiết kế UI/UX, lập trình đến ra mắt — tạo nên những trải nghiệm
-        số hiện đại khiến khách hàng phải dừng lại và nhớ đến bạn.
+        Giải pháp website trọn gói từ chiến lược, thiết kế đến công nghệ — giúp doanh nghiệp nâng tầm thương hiệu và bứt
+        phá tăng trưởng.
       </p>
       <div class="hero__ctas">
         <a href="#contact" class="btn btn--solid" v-magnetic @click.prevent="go('#contact')">

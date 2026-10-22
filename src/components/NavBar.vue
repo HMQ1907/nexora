@@ -10,8 +10,9 @@
           <span class="idx">0{{ i + 1 }}</span><span class="txt" :data-text="l.label">{{ l.label }}</span>
         </a>
       </nav>
-      <a :href="'tel:' + contact.phone" class="btn btn--solid cta" v-magnetic>
-        {{ contact.phoneDisplay }}
+      <a href="#contact" class="btn btn--solid cta" v-magnetic @click.prevent="go('#contact')">
+        Bắt đầu dự án
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
       <button class="burger" :class="{ open }" @click="toggle" :aria-expanded="open" aria-label="Mở menu">
         <span></span><span></span>
@@ -144,7 +145,7 @@ watch(
 }
 .links {
   display: flex;
-  gap: 36px;
+  gap: 30px;
   font-size: 14px;
 }
 .links a {

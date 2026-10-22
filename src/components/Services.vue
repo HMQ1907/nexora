@@ -7,8 +7,8 @@
           <h2 class="h-display" data-reveal>Mọi thứ website của bạn cần, <em>dưới một mái nhà.</em></h2>
         </div>
         <p class="lead" data-reveal>
-          Không cần làm việc với năm đơn vị khác nhau. Nexora lo trọn từ chiến lược, thiết kế, lập trình đến vận hành — để
-          bạn tập trung vào kinh doanh.
+          Một đầu mối duy nhất cho toàn bộ dự án — từ chiến lược, thiết kế, lập trình đến vận hành. Bạn tập trung kinh
+          doanh, phần công nghệ để Nexora lo.
         </p>
       </div>
 
