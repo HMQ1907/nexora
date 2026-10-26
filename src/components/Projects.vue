@@ -1,120 +1,73 @@
 <template>
+  <!-- Dự án: lưới thẻ, bấm vào cả thẻ để mở website thật -->
   <section id="work" ref="root" class="section work">
     <div class="container">
+      <SectionMark :n="4" :text="t.marks[4]" />
       <div class="head">
-        <p class="eyebrow" data-reveal>Dự án & Khách hàng</p>
-        <h2 class="h-display" data-reveal>Những thương hiệu đã <em>tin chọn</em> Nexora.</h2>
+        <h2 class="h2">{{ t.projects.title }}</h2>
+        <p class="lead">{{ t.projects.note }}</p>
       </div>
 
-      <div class="logos" data-reveal>
-        <a v-for="p in projects" :key="p.slug" :href="p.url" target="_blank" rel="noopener" class="logo">
-          <span class="dot" :style="{ background: `hsl(${p.hue} 90% 60%)` }"></span>{{ p.name }}
-        </a>
-      </div>
-
-      <div class="stack">
-        <article
-          v-for="(p, i) in projects"
-          :key="p.slug"
-          class="card"
-          :style="{ '--hue': p.hue, top: `calc(12vh + ${i * 18}px)` }"
-        >
-          <div class="card__inner">
-            <div class="info">
-              <div class="meta">
-                <span class="num">0{{ i + 1 }}</span>
-                <span>{{ p.industry }}</span>
-              </div>
-              <h3>{{ p.name }}</h3>
-              <p>{{ p.desc }}</p>
-              <ul class="scope">
-                <li>UI/UX</li><li>Front-end</li><li>Responsive</li><li>SEO</li>
-              </ul>
-              <a :href="p.url" target="_blank" rel="noopener" class="btn" v-magnetic>
-                Xem website
-                <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 17L17 7M8 7h9v9" /></svg>
-              </a>
-            </div>
-
-            <a :href="p.url" target="_blank" rel="noopener" class="browser" data-cursor="MỞ WEB" :aria-label="'Mở ' + p.name">
-              <div class="browser__bar">
+      <ul class="grid">
+        <li v-for="(p, i) in projects" :key="p.slug" class="item" :style="{ '--hue': p.hue }">
+          <a :href="p.url" target="_blank" rel="noopener" class="card" :aria-label="t.projects.open + ': ' + p.name">
+            <span class="frame">
+              <span class="bar" aria-hidden="true">
                 <span class="dots"><i></i><i></i><i></i></span>
-                <span class="url">
-                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-                  {{ p.domain }}
-                </span>
-              </div>
-              <div class="browser__view">
-                <div class="fallback">
-                  <span class="fb-name">{{ p.name }}</span>
-                  <span class="fb-domain">{{ p.domain }}</span>
-                </div>
+                <span class="url">{{ p.domain }}</span>
+              </span>
+              <span class="view">
+                <span class="fallback" aria-hidden="true">{{ p.name }}</span>
                 <img
-                  v-show="imgState[p.slug] !== 'failed'"
-                  :src="srcFor(p)"
-                  :alt="'Giao diện website ' + p.name"
+                  v-show="shotState[p.slug] !== 'failed'"
+                  :src="shotSrc(p)"
+                  :alt="p.name"
                   loading="lazy"
-                  @error="onErr(p)"
-                  @load="onLoad($event, p)"
+                  @error="onShotError(p)"
+                  @load="onShotLoad($event, p)"
                 />
-                <span class="scan"></span>
-              </div>
-            </a>
-          </div>
-        </article>
-      </div>
+                <span class="hint" aria-hidden="true">{{ t.projects.open }}</span>
+              </span>
+            </span>
+
+            <span class="info">
+              <span class="meta">
+                <span class="no">{{ String(i + 1).padStart(2, '0') }}</span>
+                <span class="industry">{{ p.industry }}</span>
+              </span>
+              <span class="name">{{ p.name }}</span>
+              <span class="desc">{{ p.desc }}</span>
+              <span class="visit">
+                {{ t.projects.open }}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9" /></svg>
+              </span>
+            </span>
+          </a>
+        </li>
+      </ul>
     </div>
   </section>
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, reactive, ref } from 'vue'
-import gsap from 'gsap'
-import { projects } from '../data'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { gsap, reduced } from '../utils/gsap'
+import { t, projects } from '../i18n'
+import { shotState, shotSrc, onShotError, onShotLoad } from '../utils/shots'
+import SectionMark from './SectionMark.vue'
 
 const root = ref(null)
-// local -> remote -> failed
-const imgState = reactive(Object.fromEntries(projects.map((p) => [p.slug, 'local'])))
-const shot = (url) => `https://s.wordpress.com/mshots/v1/${encodeURIComponent(url)}?w=1600&h=1000`
-const srcFor = (p) => (imgState[p.slug] === 'local' ? `/projects/${p.slug}.jpg` : shot(p.url))
-const onErr = (p) => {
-  imgState[p.slug] = imgState[p.slug] === 'local' ? 'remote' : 'failed'
-}
-const onLoad = (e, p) => {
-  // mshots trả về ảnh chờ nhỏ khi đang tạo; thử lại sau vài giây
-  const img = e.target
-  const tries = +(img.dataset.tries || 0)
-  if (imgState[p.slug] === 'remote' && img.naturalWidth < 500 && tries < 4) {
-    img.dataset.tries = tries + 1
-    setTimeout(() => (img.src = shot(p.url) + '&r=' + Date.now()), 4000)
-  }
-}
-
 let ctx
+
 onMounted(() => {
+  if (reduced()) return
   ctx = gsap.context(() => {
-    const cards = gsap.utils.toArray('.card')
-    cards.forEach((card, i) => {
-      // ảnh trượt nhẹ trong khung (parallax)
-      gsap.fromTo(card.querySelector('img'), { yPercent: -6 }, {
-        yPercent: 0, ease: 'none',
-        scrollTrigger: { trigger: card, start: 'top bottom', end: 'top top', scrub: true }
-      })
-      gsap.from(card.querySelector('.card__inner'), {
-        clipPath: 'inset(12% 8% 12% 8% round 28px)',
-        duration: 1.4,
-        ease: 'expo.out',
-        scrollTrigger: { trigger: card, start: 'top 85%', once: true }
-      })
-      // thẻ trước bị đẩy lùi khi thẻ sau phủ lên
-      if (i < cards.length - 1) {
-        gsap.to(card.querySelector('.card__inner'), {
-          scale: 0.92 + i * 0.015,
-          filter: 'brightness(0.55)',
-          ease: 'none',
-          scrollTrigger: { trigger: cards[i + 1], start: 'top 85%', end: 'top 15%', scrub: true }
-        })
-      }
+    gsap.utils.toArray('.item').forEach((item, i) => {
+      gsap
+        .timeline({ scrollTrigger: { trigger: item, start: 'top 85%', once: true } })
+        .from(item.querySelector('.frame'), { clipPath: 'inset(12% 10% 12% 10% round 16px)', scale: 0.94, duration: 1.3, ease: 'expo.out', delay: (i % 2) * 0.12 })
+        .from(item.querySelector('img'), { scale: 1.2, duration: 1.6, ease: 'expo.out' }, '<')
+        .from(item.querySelectorAll('.info > *'), { y: 24, opacity: 0, duration: 0.9, stagger: 0.06, ease: 'expo.out' }, '<0.3')
     })
   }, root.value)
 })
@@ -122,169 +75,200 @@ onBeforeUnmount(() => ctx?.revert())
 </script>
 
 <style scoped>
-.head { margin-bottom: 40px; }
-.head .h-display { margin-top: 20px; font-size: clamp(32px, 4.6vw, 68px); max-width: 14em; }
-.logos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: clamp(48px, 7vw, 88px);
+.work.section {
+  padding: clamp(88px, 8vw, 120px) 0 clamp(64px, 7vw, 110px);
 }
-.logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 18px;
-  border: 1px solid var(--line-2);
-  border-radius: 999px;
-  font-family: var(--font-display);
-  font-size: 14px;
-  transition: border-color 0.3s, background 0.3s;
+.work :deep(.mark) {
+  margin-bottom: 20px;
 }
-.logo:hover { border-color: var(--accent); background: rgba(200, 255, 46, 0.06); }
-.dot { width: 8px; height: 8px; border-radius: 50%; }
-
-.stack { display: flex; flex-direction: column; gap: 6vh; }
-.card {
-  position: sticky;
-  height: min(76vh, 720px);
-}
-.card__inner {
-  height: 100%;
+.head {
   display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  gap: clamp(24px, 4vw, 64px);
-  align-items: center;
-  padding: clamp(20px, 3.4vw, 48px);
-  border-radius: 28px;
-  border: 1px solid var(--line-2);
-  background:
-    radial-gradient(800px circle at 100% 0%, hsl(var(--hue) 90% 55% / 0.14), transparent 55%),
-    linear-gradient(180deg, #11141b, #0b0d12);
-  transform-origin: center top;
-  overflow: hidden;
-  will-change: transform;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: end;
+  margin-bottom: clamp(28px, 3.5vw, 48px);
 }
-.meta {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
+.head .h2 {
+  font-size: clamp(34px, 3.8vw, 60px);
 }
-.num {
-  color: var(--accent-ink);
-  background: var(--accent);
-  padding: 4px 8px;
-  border-radius: 6px;
+.grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(20px, 2.4vw, 36px);
 }
-.info h3 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(30px, 3.6vw, 56px);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  margin: 22px 0 16px;
-}
-.info p { color: var(--muted); font-weight: 300; max-width: 40ch; }
-.scope { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 32px; }
-.scope li {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--line-2);
-  color: var(--muted);
-}
-
-.browser {
-  display: block;
-  height: 100%;
-  max-height: 560px;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid var(--line-2);
-  background: #0a0b0f;
-  box-shadow: 0 40px 80px -30px hsl(var(--hue) 90% 50% / 0.35);
+.card {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+  height: 100%;
 }
-.browser__bar {
+.frame {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.8);
+  transition: border-color 0.4s, box-shadow 0.5s;
+}
+.card:hover .frame,
+.card:focus-visible .frame {
+  border-color: rgba(196, 164, 107, 0.7);
+  box-shadow: 0 40px 80px -40px hsl(var(--hue) 50% 40% / 0.6);
+}
+.bar {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--line);
-  background: #12151c;
-  flex: none;
 }
-.dots { display: flex; gap: 6px; }
-.dots i { width: 10px; height: 10px; border-radius: 50%; background: #2a2e38; }
+.dots {
+  display: flex;
+  gap: 6px;
+}
+.dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(236, 229, 214, 0.18);
+}
 .url {
   flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--muted);
-  background: #0a0b0f;
-  border-radius: 8px;
-  padding: 6px 12px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--stone);
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+  padding: 3px 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.browser__view {
+.view {
   position: relative;
-  flex: 1;
+  display: block;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
+  background:
+    radial-gradient(circle at 70% 25%, hsl(var(--hue) 35% 32% / 0.6), transparent 60%),
+    var(--night-2);
 }
-.browser__view img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 112%;
-  object-fit: cover;
-  object-position: top;
-  transition: transform 1.2s var(--ease);
-}
-.browser:hover img { transform: scale(1.04); }
 .fallback {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 28px;
-  background:
-    radial-gradient(circle at 30% 30%, hsl(var(--hue) 90% 55% / 0.5), transparent 50%),
-    radial-gradient(circle at 80% 70%, hsl(calc(var(--hue) + 60) 90% 55% / 0.35), transparent 50%),
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 28px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 28px),
-    #0b0d12;
+  display: grid;
+  place-items: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(30px, 3.4vw, 52px);
+  color: rgba(236, 229, 214, 0.45);
 }
-.fb-name { font-family: var(--font-display); font-weight: 800; font-size: clamp(28px, 4vw, 56px); line-height: 1; }
-.fb-domain { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: 10px; }
-.scan {
+.view img {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent, hsl(var(--hue) 90% 60% / 0.18) 50%, transparent);
-  height: 30%;
-  transform: translateY(-100%);
-  pointer-events: none;
-  opacity: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0%;
+  transition: object-position 5s cubic-bezier(0.45, 0, 0.55, 1);
 }
-.browser:hover .scan { animation: scan 1.6s var(--ease) infinite; opacity: 1; }
-@keyframes scan { to { transform: translateY(400%); } }
-
+/* Rê chuột: ảnh tự cuộn xem toàn trang */
+.card:hover .view img {
+  object-position: 50% 100%;
+}
+.hint {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--brass);
+  color: var(--night);
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s, transform 0.5s var(--ease);
+}
+.card:hover .hint,
+.card:focus-visible .hint {
+  opacity: 1;
+  transform: none;
+}
+.info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.meta {
+  display: flex;
+  gap: 12px;
+  font-size: var(--t-sm);
+}
+.no {
+  color: var(--ivory);
+  font-variant-numeric: lining-nums;
+}
+.industry {
+  color: var(--brass);
+}
+.name {
+  margin-top: 8px;
+  font-family: var(--serif);
+  font-size: clamp(30px, 2.8vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  transition: color 0.3s;
+}
+.card:hover .name {
+  color: var(--brass);
+}
+.desc {
+  margin-top: 10px;
+  color: var(--stone);
+  font-size: 15px;
+  max-width: 52ch;
+}
+.visit {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  margin-top: 18px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  font-size: 14px;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+.visit svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.4s var(--ease);
+}
+.card:hover .visit {
+  background: var(--ivory);
+  color: var(--night);
+  border-color: var(--ivory);
+}
+.card:hover .visit svg {
+  transform: translate(2px, -2px);
+}
 @media (max-width: 900px) {
-  .card { height: auto; }
-  .card__inner { grid-template-columns: 1fr; align-items: stretch; }
-  .browser { height: 56vw; min-height: 220px; order: -1; }
-  .scope { margin: 18px 0 24px; }
+  .head {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 44px;
+  }
+  .hint {
+    display: none;
+  }
 }
 </style>

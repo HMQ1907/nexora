@@ -1,30 +1,43 @@
 <template>
-  <section id="process" ref="root" class="process">
-    <div ref="pin" class="pin">
-      <div class="container intro">
-        <div>
-          <p class="eyebrow">Quy trình</p>
-          <h2 class="h-display">Từ ý tưởng đến ra mắt — <em>A → Z.</em></h2>
-        </div>
-        <div class="progress">
-          <span class="progress__num"><span ref="cur">A</span> / Z</span>
-          <span class="progress__bar"><span ref="fill"></span></span>
-        </div>
+  <!-- Cảnh 5: quy trình 14 ngày dạng mặt đồng hồ quay theo nhịp cuộn -->
+  <section id="process" ref="root" class="process" :class="{ static: still }">
+    <div ref="pin" class="pin container">
+      <div class="copy">
+        <SectionMark :n="5" :text="t.marks[3]" />
+        <h2 class="h2">{{ t.process.title }}</h2>
+        <p class="lead">{{ t.process.lead }}</p>
+
+        <ol class="steps">
+          <li v-for="(p, i) in steps" :key="p.step" class="step" :class="{ on: i === active }">
+            <p class="step__time">{{ p.time }}</p>
+            <h3><span class="step__letter">{{ p.step }}.</span> {{ p.title }}</h3>
+            <p class="step__desc">{{ p.desc }}</p>
+          </li>
+        </ol>
       </div>
 
-      <div ref="track" class="track">
-        <article v-for="(p, i) in process" :key="p.step" class="step">
-          <div class="step__letter">{{ p.step }}</div>
-          <div class="step__body">
-            <div class="step__meta">
-              <span>0{{ i + 1 }}</span><span>{{ p.time }}</span>
-            </div>
-            <h3>{{ p.title }}</h3>
-            <p>{{ p.desc }}</p>
-          </div>
-          <span class="node"></span>
-        </article>
-        <div class="track__line"></div>
+      <div class="clock" aria-hidden="true">
+        <svg viewBox="0 0 500 500">
+          <circle class="face" cx="250" cy="250" r="236" />
+          <circle class="track" cx="250" cy="250" r="200" />
+          <circle ref="arc" class="arc" cx="250" cy="250" r="200" transform="rotate(-90 250 250)" />
+          <g v-for="d in TOTAL" :key="d" :transform="`rotate(${((d - 1) / TOTAL) * 360} 250 250)`">
+            <line class="tick" :class="{ hit: d <= day, start: isStart(d) }" x1="250" y1="22" x2="250" :y2="isStart(d) ? 44 : 36" />
+          </g>
+          <g v-for="d in TOTAL" :key="'n' + d">
+            <text class="dnum" :class="{ hit: d <= day }" :x="pos(d).x" :y="pos(d).y">{{ d }}</text>
+          </g>
+          <g ref="hand" class="hand">
+            <line x1="250" y1="250" x2="250" y2="64" />
+            <circle cx="250" cy="64" r="6" />
+          </g>
+          <circle class="hub" cx="250" cy="250" r="4" />
+        </svg>
+        <div class="center">
+          <span class="center__k">{{ t.process.day }}</span>
+          <span class="center__n">{{ String(day).padStart(2, '0') }}</span>
+          <span class="center__step">{{ steps[active].step }}. {{ steps[active].title }}</span>
+        </div>
       </div>
     </div>
   </section>
@@ -32,166 +45,239 @@
 
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue'
-import gsap from 'gsap'
-import { process } from '../data'
+import { gsap, reduced } from '../utils/gsap'
+import { t } from '../i18n'
+import SectionMark from './SectionMark.vue'
 
+const TOTAL = 14
+const still = reduced()
+const steps = t.value.process.steps
 const root = ref(null)
 const pin = ref(null)
-const track = ref(null)
-const fill = ref(null)
-const cur = ref(null)
+const arc = ref(null)
+const hand = ref(null)
+const day = ref(still ? TOTAL : 1)
+const active = ref(still ? steps.length - 1 : 0)
 let mm
 
+const isStart = (d) => steps.some((s) => s.start === d)
+// Vị trí số ngày quanh mặt đồng hồ
+const pos = (d) => {
+  const a = ((d - 1) / TOTAL) * Math.PI * 2 - Math.PI / 2
+  return { x: 250 + Math.cos(a) * 168, y: 250 + Math.sin(a) * 168 }
+}
+const stepFor = (d) => {
+  let idx = 0
+  steps.forEach((s, i) => {
+    if (d >= s.start) idx = i
+  })
+  return idx
+}
+
 onMounted(() => {
+  if (still) return
   mm = gsap.matchMedia()
-  // Desktop: cuộn ngang được ghim
-  mm.add('(min-width: 901px)', () => {
-    const steps = gsap.utils.toArray('.step', root.value)
-    const dist = () => track.value.scrollWidth - window.innerWidth
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: root.value,
-        start: 'top top',
-        end: () => '+=' + dist(),
-        pin: pin.value,
-        scrub: 1,
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          const idx = Math.min(steps.length - 1, Math.floor(self.progress * steps.length))
-          cur.value.textContent = process[idx].step
-          steps.forEach((s, i) => s.classList.toggle('active', i <= idx))
-        }
+  const build = (pinIt) => {
+    const st = {
+      trigger: root.value,
+      start: pinIt ? 'top top' : 'top 70%',
+      end: pinIt ? '+=70%' : 'bottom 60%',
+      scrub: 0.6,
+      onUpdate: (self) => {
+        const d = Math.max(1, Math.min(TOTAL, Math.floor(1 + self.progress * TOTAL)))
+        day.value = d
+        active.value = stepFor(d)
       }
-    })
-    tl.to(track.value, { x: () => -dist(), ease: 'none' }, 0)
-      .fromTo(fill.value, { scaleX: 0 }, { scaleX: 1, ease: 'none' }, 0)
-    steps.forEach((s) => {
-      gsap.fromTo(
-        s.querySelector('.step__letter'),
-        { yPercent: 30 },
-        {
-          yPercent: -10,
-          ease: 'none',
-          scrollTrigger: { trigger: s, containerAnimation: tl, start: 'left right', end: 'right left', scrub: true }
-        }
-      )
-    })
-  })
-  // Mobile: danh sách dọc
-  mm.add('(max-width: 900px)', () => {
-    gsap.utils.toArray('.step', root.value).forEach((s) => {
-      gsap.fromTo(s, { opacity: 0, y: 50 }, {
-        opacity: 1, y: 0, duration: 1, ease: 'expo.out',
-        scrollTrigger: { trigger: s, start: 'top 85%', onEnter: () => s.classList.add('active') }
-      })
-    })
-  })
+    }
+    if (pinIt) st.pin = pin.value
+    gsap
+      .timeline({ defaults: { ease: 'none' }, scrollTrigger: st })
+      .fromTo(arc.value, { drawSVG: '0%' }, { drawSVG: '100%', duration: 1 }, 0)
+      .fromTo(hand.value, { rotation: 0, svgOrigin: '250 250' }, { rotation: ((TOTAL - 1) / TOTAL) * 360, svgOrigin: '250 250', duration: 1 }, 0)
+  }
+  mm.add('all', () => build(true))
 })
 onBeforeUnmount(() => mm?.revert())
 </script>
 
 <style scoped>
 .process {
-  position: relative;
-  background: var(--bg-2);
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  background: var(--night-2);
 }
 .pin {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
-  gap: clamp(32px, 6vh, 72px);
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(40px, 6vw, 100px);
+  align-items: center;
+  padding-top: 100px;
+  padding-bottom: 60px;
 }
-.intro {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 40px;
+.copy .lead {
+  margin-top: 22px;
 }
-.intro .h-display { margin-top: 20px; font-size: clamp(32px, 4.6vw, 68px); max-width: 12em; }
-.progress { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; min-width: 220px; }
-.progress__num { font-family: var(--font-mono); font-size: 13px; color: var(--muted); letter-spacing: 0.12em; }
-.progress__num span { color: var(--accent); }
-.progress__bar { width: 220px; height: 1px; background: var(--line-2); }
-.progress__bar span {
-  display: block;
-  height: 100%;
-  background: var(--accent);
-  transform-origin: left;
-  transform: scaleX(0);
-  box-shadow: 0 0 10px var(--accent);
-}
-.track {
+.steps {
+  list-style: none;
   position: relative;
-  display: flex;
-  gap: 0;
-  width: max-content;
-  padding: 0 var(--pad);
-}
-.track__line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 1px;
-  background: var(--line-2);
+  display: grid;
+  margin-top: clamp(28px, 5vh, 56px);
 }
 .step {
-  position: relative;
-  width: clamp(340px, 30vw, 460px);
-  padding: 40px 48px 0 0;
-  flex: none;
+  grid-area: 1 / 1;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s var(--ease), transform 0.6s var(--ease);
+  pointer-events: none;
 }
-.node {
-  position: absolute;
-  top: -6px;
-  left: 0;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  border: 1px solid var(--line-2);
-  background: var(--bg-2);
-  transition: background 0.4s, box-shadow 0.4s, border-color 0.4s;
-  z-index: 1;
+.step.on {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
 }
-.step.active .node { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 16px var(--accent); }
+.step__time {
+  font-size: var(--t-sm);
+  color: var(--brass);
+}
+.step h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: var(--t-xl);
+  line-height: 1.1;
+  margin: 6px 0 10px;
+}
 .step__letter {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(120px, 16vw, 240px);
-  line-height: 0.85;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.18);
-  transition: -webkit-text-stroke-color 0.6s, color 0.6s;
-  margin-bottom: 24px;
+  font-style: italic;
+  color: var(--brass);
 }
-.step.active .step__letter { -webkit-text-stroke-color: var(--accent); }
-.step__meta {
+.step__desc {
+  color: var(--stone);
+  max-width: 42ch;
+}
+
+.clock {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  justify-self: center;
+  aspect-ratio: 1;
+}
+.clock svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.face {
+  fill: none;
+  stroke: var(--line);
+}
+.track {
+  fill: none;
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+.arc {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(196, 164, 107, 0.6));
+}
+.tick {
+  stroke: var(--line-2);
+  stroke-width: 1;
+  transition: stroke 0.4s;
+}
+.tick.start {
+  stroke-width: 2;
+}
+.tick.hit {
+  stroke: var(--brass);
+}
+.dnum {
+  font-family: var(--sans);
+  font-size: 15px;
+  fill: var(--stone);
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-variant-numeric: lining-nums;
+  transition: fill 0.4s;
+}
+.dnum.hit {
+  fill: var(--ivory);
+}
+.hand line {
+  stroke: var(--ivory);
+  stroke-width: 1;
+}
+.hand circle {
+  fill: var(--brass);
+}
+.hub {
+  fill: var(--ivory);
+}
+.center {
+  position: absolute;
+  inset: 0;
   display: flex;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--muted);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 18px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
-.step h3 { font-family: var(--font-display); font-weight: 600; font-size: 26px; margin-bottom: 10px; }
-.step p { color: var(--muted); font-weight: 300; font-size: 15px; max-width: 34ch; }
+.center__k {
+  font-size: var(--t-sm);
+  color: var(--stone);
+}
+.center__n {
+  font-family: var(--serif);
+  font-size: clamp(72px, 9vw, 130px);
+  line-height: 1;
+  color: var(--brass);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.center__step {
+  margin-top: 4px;
+  font-size: var(--t-sm);
+  color: var(--ivory);
+}
+
+/* Không có chuyển động: hiện toàn bộ các bước */
+.process.static .steps {
+  gap: 32px;
+}
+.process.static .step {
+  grid-area: auto;
+  opacity: 1;
+  transform: none;
+}
 
 @media (max-width: 900px) {
-  .pin { height: auto; padding: 96px 0; }
-  .intro { flex-direction: column; align-items: flex-start; }
-  .progress { display: none; }
-  .track { flex-direction: column; width: 100%; gap: 48px; }
-  .track__line { left: var(--pad); right: auto; top: 0; bottom: 0; width: 1px; height: auto; }
-  .step { width: 100%; padding: 0 0 0 32px; }
-  .node { top: 18px; left: -5px; }
-  .step__letter { font-size: 96px; margin-bottom: 12px; }
+  .pin {
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 20px;
+    padding-top: 84px;
+    padding-bottom: 24px;
+  }
+  .clock {
+    order: -1;
+    max-width: min(300px, 40svh);
+  }
+  .copy .lead {
+    display: none;
+  }
+  .copy .h2 {
+    font-size: clamp(30px, 8vw, 44px);
+  }
+  .steps {
+    margin-top: 18px;
+  }
+  .process.static .pin {
+    padding-top: 96px;
+    padding-bottom: 96px;
+  }
+  .process.static .copy .lead {
+    display: block;
+  }
 }
 </style>

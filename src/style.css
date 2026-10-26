@@ -1,20 +1,29 @@
 :root {
-  --bg: #06070a;
-  --bg-2: #0b0d12;
-  --surface: #0f1218;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-2: rgba(255, 255, 255, 0.16);
-  --text: #edeff3;
-  --muted: #8b91a1;
-  --accent: #c8ff2e;
-  --accent-2: #5b8cff;
-  --accent-ink: #0a0c05;
-  --font-display: 'Unbounded', system-ui, sans-serif;
-  --font-body: 'Be Vietnam Pro', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --pad: clamp(16px, 4vw, 56px);
+  /* Bảng màu: tối trầm, ấm, điểm nhấn đồng thau */
+  --night: #12100e;
+  --night-2: #191613;
+  --surface: #201c18;
+  --ivory: #ece5d6;
+  --stone: #a39b8c;
+  --brass: #c4a46b;
+  --brass-soft: rgba(196, 164, 107, 0.16);
+  --line: rgba(236, 229, 214, 0.12);
+  --line-2: rgba(236, 229, 214, 0.22);
+
+  --serif: 'Cormorant Garamond Variable', 'Times New Roman', serif;
+  --sans: 'Be Vietnam Pro', system-ui, sans-serif;
+
+  /* Thang chữ */
+  --t-sm: 14px;
+  --t-base: 17px;
+  --t-md: 20px;
+  --t-lg: clamp(26px, 2.4vw, 32px);
+  --t-xl: clamp(34px, 3.6vw, 52px);
+  --t-2xl: clamp(46px, 6.4vw, 96px);
+
+  --pad: clamp(18px, 4.5vw, 72px);
   --max: 1440px;
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 *,
@@ -34,18 +43,21 @@ html.lenis body {
 }
 
 html {
-  background: var(--bg);
+  background: var(--night);
   color-scheme: dark;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.6;
+  background: var(--night);
+  color: var(--ivory);
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: var(--t-base);
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  /* Số kiểu thẳng hàng (font serif mặc định dùng số kiểu cổ, trông như chữ La Mã) */
+  font-variant-numeric: lining-nums;
 }
 
 main,
@@ -53,13 +65,9 @@ footer {
   overflow-x: clip;
 }
 
-body.is-loading {
-  overflow: hidden;
-}
-
 ::selection {
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--brass);
+  color: var(--night);
 }
 
 a {
@@ -80,6 +88,12 @@ select {
   color: inherit;
 }
 
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
 .container {
   width: 100%;
   max-width: var(--max);
@@ -89,64 +103,29 @@ select {
 
 .section {
   position: relative;
-  padding: clamp(96px, 14vw, 180px) 0;
+  padding: clamp(96px, 13vw, 200px) 0;
 }
 
-/* Nhãn mono nhỏ */
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-.eyebrow::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent);
-}
-
-.h-display {
-  font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.05;
+.h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: var(--t-2xl);
+  line-height: 1;
   letter-spacing: -0.02em;
-  font-size: clamp(34px, 6vw, 88px);
   text-wrap: balance;
 }
 
-.h-display em {
-  font-style: normal;
-  color: var(--accent);
-}
-
 .lead {
-  color: var(--muted);
-  font-size: clamp(16px, 1.3vw, 19px);
-  max-width: 56ch;
-  font-weight: 300;
+  font-size: clamp(17px, 1.3vw, 19px);
+  line-height: 1.75;
+  max-width: 50ch;
+  color: var(--stone);
 }
 
-/* Tách chữ */
-.w {
-  display: inline-block;
-  white-space: nowrap;
-}
-.c {
-  display: inline-block;
-  overflow: hidden;
-  vertical-align: top;
+/* Dòng chữ tách bởi SplitText có mặt nạ */
+.split-line {
   padding-bottom: 0.08em;
   margin-bottom: -0.08em;
-}
-.ci {
-  display: inline-block;
-  will-change: transform;
 }
 
 /* Nút */
@@ -154,100 +133,76 @@ select {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  padding: 16px 26px;
+  min-height: 54px;
+  padding: 0 30px;
   border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 0.02em;
   border: 1px solid var(--line-2);
   background: transparent;
   cursor: pointer;
   overflow: hidden;
   isolation: isolate;
+  white-space: nowrap;
   transition: color 0.5s var(--ease), border-color 0.5s var(--ease);
 }
 .btn::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--accent);
+  z-index: -1;
+  background: var(--ivory);
   border-radius: inherit;
   transform: translateY(101%);
   transition: transform 0.6s var(--ease);
-  z-index: -1;
 }
 .btn:hover {
-  color: var(--accent-ink);
-  border-color: var(--accent);
+  color: var(--night);
+  border-color: var(--ivory);
 }
 .btn:hover::before {
   transform: translateY(0);
 }
-.btn--solid {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-color: var(--accent);
+.btn--brass {
+  background: var(--brass);
+  border-color: var(--brass);
+  color: var(--night);
+  font-weight: 500;
 }
-.btn--solid::before {
-  background: var(--text);
-}
-.btn .arrow {
+.btn svg {
   width: 18px;
   height: 18px;
-  transition: transform 0.5s var(--ease);
-}
-.btn:hover .arrow {
-  transform: rotate(-45deg);
+  flex: none;
 }
 
-/* Hạt nhiễu toàn trang */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Hạt nhiễu rất nhẹ cho cảm giác giấy in */
 .grain {
   position: fixed;
-  inset: -50%;
-  z-index: 90;
-  pointer-events: none;
-  opacity: 0.06;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation: grain 1s steps(6) infinite;
-}
-@keyframes grain {
-  0% { transform: translate(0, 0); }
-  20% { transform: translate(-3%, 2%); }
-  40% { transform: translate(2%, -4%); }
-  60% { transform: translate(-4%, -1%); }
-  80% { transform: translate(3%, 3%); }
-  100% { transform: translate(0, 0); }
-}
-
-/* Lưới nền mờ */
-.grid-bg {
-  position: absolute;
   inset: 0;
+  z-index: 150;
   pointer-events: none;
-  background-image: linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 80px 80px;
-  mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
-  opacity: 0.5;
-}
-
-[data-reveal] {
-  opacity: 0;
-  transform: translateY(40px);
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
-  }
-  [data-reveal] { opacity: 1; transform: none; }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  body.has-cursor, body.has-cursor a, body.has-cursor button {
-    cursor: none;
   }
 }

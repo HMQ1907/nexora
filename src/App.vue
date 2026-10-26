@@ -1,78 +1,100 @@
 <template>
-  <Preloader @done="onLoaded" />
-  <Cursor />
-  <NavBar :ready="ready" />
-  <main>
-    <Hero :ready="ready" />
-    <Marquee alt :items="['Chiến lược', 'Thiết kế UI/UX', 'Lập trình', '3D & Motion', 'Ra mắt', 'Đồng hành']" :speed="30" />
-    <About />
+  <Loader @done="ready = true" />
+  <a class="skip" href="#main">{{ t.ui.skip }}</a>
+  <div class="progress" aria-hidden="true"><span ref="bar"></span></div>
+  <NavBar />
+  <main id="main" :key="lang">
+    <Hero />
+    <Intro />
     <Services />
-    <Process />
+    <Industries />
     <Projects />
-    <Marquee :items="tech" :speed="45" reverse />
+    <Founder />
+    <Process />
     <Contact />
   </main>
-  <SiteFooter />
+  <SiteFooter :key="'f' + lang" />
+  <ZaloFab :key="'z' + lang" />
+  <div ref="wipe" class="wipe" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, provide, shallowRef, ref } from 'vue'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { nextTick, onMounted, onBeforeUnmount, provide, ref, shallowRef } from 'vue'
 import Lenis from 'lenis'
-import Preloader from './components/Preloader.vue'
-import Cursor from './components/Cursor.vue'
+import { gsap, ScrollTrigger, reduced } from './utils/gsap'
+import { lang, t, setLang, applyLang } from './i18n'
+import Loader from './components/Loader.vue'
 import NavBar from './components/NavBar.vue'
 import Hero from './components/Hero.vue'
-import Marquee from './components/Marquee.vue'
-import About from './components/About.vue'
+import Intro from './components/Intro.vue'
+import Industries from './components/Industries.vue'
 import Services from './components/Services.vue'
 import Process from './components/Process.vue'
 import Projects from './components/Projects.vue'
+import Founder from './components/Founder.vue'
 import Contact from './components/Contact.vue'
 import SiteFooter from './components/SiteFooter.vue'
-import { tech } from './data'
-
-gsap.registerPlugin(ScrollTrigger)
+import ZaloFab from './components/ZaloFab.vue'
 
 const lenis = shallowRef(null)
-provide('lenis', lenis)
 const ready = ref(false)
-let raf
+const bar = ref(null)
+const wipe = ref(null)
+provide('lenis', lenis)
+provide('ready', ready)
 
-if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
-
-const onLoaded = () => {
-  ready.value = true
-  document.body.classList.remove('is-loading')
-  lenis.value?.start()
-  ScrollTrigger.refresh()
+const scrollTo = (href) => {
+  const target = href === '#top' ? 0 : href
+  if (lenis.value) lenis.value.scrollTo(target, { duration: 1.6 })
+  else if (target === 0) window.scrollTo({ top: 0, behavior: 'smooth' })
+  else document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' })
 }
+provide('scrollTo', scrollTo)
+
+// Đổi ngôn ngữ: tấm màn quét qua, nội dung được dựng lại, giữ nguyên vị trí đang xem
+const switchLang = async (l) => {
+  if (l === lang.value) return
+  const y = window.scrollY
+  const jump = (to) => (lenis.value ? lenis.value.scrollTo(to, { immediate: true, force: true }) : window.scrollTo(0, to))
+  // Dựng lại nội dung ở đầu trang (sau tấm màn) để mọi hiệu ứng cuộn được tính đúng,
+  // rồi đưa người xem về vị trí cũ
+  const swap = async () => {
+    jump(0)
+    setLang(l)
+    await nextTick()
+    ScrollTrigger.refresh()
+    jump(y)
+    ScrollTrigger.update()
+  }
+  if (reduced()) return swap()
+  // Chuyển mờ nhanh, không hiện chữ
+  await gsap.to(wipe.value, { opacity: 1, duration: 0.25, ease: 'power2.out' })
+  await swap()
+  await gsap.to(wipe.value, { opacity: 0, duration: 0.4, delay: 0.1, ease: 'power2.out' })
+}
+provide('switchLang', switchLang)
+
+let raf
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
 
 onMounted(() => {
   window.scrollTo(0, 0)
-  document.body.classList.add('is-loading')
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-  if (!reduce) {
-    const l = new Lenis({ duration: 1.15, smoothWheel: true, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) })
-    l.stop()
+  applyLang()
+  if (!reduced()) {
+    const l = new Lenis({ duration: 1.2, smoothWheel: true })
     l.on('scroll', ScrollTrigger.update)
-    raf = (t) => l.raf(t * 1000)
+    raf = (time) => l.raf(time * 1000)
     gsap.ticker.add(raf)
     gsap.ticker.lagSmoothing(0)
     lenis.value = l
   }
-
-  // Hiệu ứng xuất hiện chung cho mọi [data-reveal]
-  ScrollTrigger.batch('[data-reveal]', {
-    start: 'top 90%',
-    once: true,
-    onEnter: (els) =>
-      gsap.to(els, { opacity: 1, y: 0, duration: 1.2, stagger: 0.09, ease: 'expo.out', overwrite: true })
+  // Thanh tiến trình cuộn ở mép trên
+  gsap.to(bar.value, {
+    scaleX: 1,
+    ease: 'none',
+    scrollTrigger: { trigger: document.documentElement, start: 'top top', end: 'bottom bottom', scrub: 0.3 }
   })
-
   document.fonts?.ready.then(() => ScrollTrigger.refresh())
 })
 
@@ -81,3 +103,47 @@ onBeforeUnmount(() => {
   lenis.value?.destroy()
 })
 </script>
+
+<style>
+.skip {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 300;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--brass);
+  color: var(--night);
+  font-weight: 500;
+  transform: translateY(-200%);
+}
+.skip:focus {
+  transform: none;
+}
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 120;
+  height: 2px;
+  pointer-events: none;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--brass);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 350;
+  display: grid;
+  place-items: center;
+  background: var(--night);
+  opacity: 0;
+  pointer-events: none;
+}
+</style>

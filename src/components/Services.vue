@@ -1,172 +1,171 @@
 <template>
+  <!-- Dịch vụ: 6 thẻ trong một màn hình, viền đồng sáng theo con trỏ -->
   <section id="services" ref="root" class="section services">
     <div class="container">
+      <SectionMark :n="2" :text="t.marks[2]" />
       <div class="head">
-        <div>
-          <p class="eyebrow" data-reveal>Dịch vụ</p>
-          <h2 class="h-display" data-reveal>Mọi thứ website của bạn cần, <em>dưới một mái nhà.</em></h2>
-        </div>
-        <p class="lead" data-reveal>
-          Một đầu mối duy nhất cho toàn bộ dự án — từ chiến lược, thiết kế, lập trình đến vận hành. Bạn tập trung kinh
-          doanh, phần công nghệ để Nexora lo.
-        </p>
+        <h2 class="h2">{{ t.services.title }}</h2>
+        <p class="lead">{{ t.services.lead }}</p>
       </div>
 
-      <div class="grid">
-        <article
-          v-for="(s, i) in services"
-          :key="s.code"
-          class="card"
-          data-reveal
-          @pointermove="spot"
-          @pointerleave="reset"
-        >
-          <div class="card__inner">
-            <div class="card__top">
-              <span class="code">{{ s.code }}</span>
-              <span class="icon" v-html="icons[i]"></span>
-            </div>
-            <h3>{{ s.title }}</h3>
-            <p>{{ s.desc }}</p>
-            <ul class="tags">
-              <li v-for="t in s.tags" :key="t">{{ t }}</li>
-            </ul>
-          </div>
-        </article>
+      <ul class="grid">
+        <li v-for="(s, i) in t.services.items" :key="s.title" class="card" @pointermove="spot">
+          <span class="no" aria-hidden="true">{{ String(i + 1).padStart(2, '0') }}</span>
+          <h3><span class="t">{{ s.title }}</span></h3>
+          <p>{{ s.desc }}</p>
+          <ul class="tags">
+            <li v-for="tag in s.tags" :key="tag">{{ tag }}</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="cta">
+        <a href="#contact" class="btn btn--brass" @click.prevent="scrollTo('#contact')">
+          {{ t.ui.quote }}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </a>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
-import gsap from 'gsap'
-import { services } from '../data'
+import { inject, onMounted, onBeforeUnmount, ref } from 'vue'
+import { gsap, reduced } from '../utils/gsap'
+import { scramble } from '../utils/fx'
+import { t } from '../i18n'
+import SectionMark from './SectionMark.vue'
 
-const icons = [
-  '<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="5"/><path d="M16 1v6M16 25v6M1 16h6M25 16h6"/></svg>',
-  '<svg viewBox="0 0 32 32"><rect x="3" y="5" width="26" height="22" rx="2"/><path d="M3 11h26M9 17h8M9 21h14"/></svg>',
-  '<svg viewBox="0 0 32 32"><path d="M11 9l-7 7 7 7M21 9l7 7-7 7M18 6l-4 20"/></svg>',
-  '<svg viewBox="0 0 32 32"><path d="M16 3l12 7v12l-12 7-12-7V10z"/><path d="M4 10l12 7 12-7M16 17v12"/></svg>',
-  '<svg viewBox="0 0 32 32"><path d="M4 6h4l3 15h15l3-11H10"/><circle cx="13" cy="26" r="2"/><circle cx="24" cy="26" r="2"/></svg>',
-  '<svg viewBox="0 0 32 32"><path d="M16 3l11 4v8c0 7-5 12-11 14C10 27 5 22 5 15V7z"/><path d="M11 16l4 4 7-8"/></svg>'
-]
+const scrollTo = inject('scrollTo')
+const root = ref(null)
+let ctx
 
 const spot = (e) => {
-  const el = e.currentTarget
-  const r = el.getBoundingClientRect()
-  const x = e.clientX - r.left
-  const y = e.clientY - r.top
-  el.style.setProperty('--mx', `${x}px`)
-  el.style.setProperty('--my', `${y}px`)
-  if (e.pointerType === 'mouse') {
-    gsap.to(el.firstElementChild, {
-      rotateY: ((x / r.width) - 0.5) * 8,
-      rotateX: -((y / r.height) - 0.5) * 8,
-      duration: 0.6,
-      ease: 'power3.out'
-    })
-  }
+  const r = e.currentTarget.getBoundingClientRect()
+  e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`)
+  e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`)
 }
-const reset = (e) => gsap.to(e.currentTarget.firstElementChild, { rotateX: 0, rotateY: 0, duration: 0.9, ease: 'elastic.out(1,0.5)' })
+
+onMounted(() => {
+  if (reduced()) return
+  ctx = gsap.context(() => {
+    gsap
+      .timeline({ scrollTrigger: { trigger: '.grid', start: 'top 82%', once: true } })
+      .from('.card', { y: 60, opacity: 0, rotateX: -12, duration: 1.1, stagger: { each: 0.08, grid: 'auto' }, ease: 'expo.out' })
+      .add(() => gsap.utils.toArray('.card .t').forEach((el, i) => setTimeout(() => scramble(el, undefined, 700), i * 80)), 0.2)
+  }, root.value)
+})
+onBeforeUnmount(() => ctx?.revert())
 </script>
 
 <style scoped>
+.services.section {
+  padding: clamp(88px, 8vw, 120px) 0 clamp(64px, 7vw, 110px);
+}
+.services :deep(.mark) {
+  margin-bottom: 20px;
+}
 .head {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 40px;
   align-items: end;
-  margin-bottom: clamp(48px, 7vw, 88px);
+  margin-bottom: clamp(28px, 3.5vw, 44px);
 }
-.head .h-display { margin-top: 20px; font-size: clamp(32px, 4.6vw, 68px); }
+.head .h2 {
+  font-size: clamp(34px, 3.8vw, 60px);
+}
 .grid {
+  list-style: none;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 12px;
+  perspective: 1200px;
 }
 .card {
   --mx: 50%;
-  --my: 50%;
+  --my: 0%;
   position: relative;
-  border-radius: 20px;
-  padding: 1px;
-  background: var(--line);
-  perspective: 900px;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 26px 24px;
+  border-radius: 18px;
+  background:
+    radial-gradient(320px circle at var(--mx) var(--my), rgba(196, 164, 107, 0.1), transparent 65%),
+    var(--night-2);
+  border: 1px solid var(--line);
   isolation: isolate;
 }
-/* viền sáng theo con trỏ */
+/* Viền đồng sáng quanh con trỏ */
 .card::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(360px circle at var(--mx) var(--my), rgba(200, 255, 46, 0.7), transparent 45%);
-  opacity: 0;
-  transition: opacity 0.4s;
+  inset: -1px;
   z-index: -1;
-}
-.card:hover::before { opacity: 1; }
-.card__inner {
-  position: relative;
-  height: 100%;
-  border-radius: 19px;
-  padding: 32px 28px 28px;
-  background: var(--surface);
-  overflow: hidden;
-  transform-style: preserve-3d;
-}
-.card__inner::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(420px circle at var(--mx) var(--my), rgba(200, 255, 46, 0.07), transparent 50%);
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(260px circle at var(--mx) var(--my), rgba(196, 164, 107, 0.9), transparent 60%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.4s;
-  pointer-events: none;
 }
-.card:hover .card__inner::after { opacity: 1; }
-.card__top {
+.card:hover::before {
+  opacity: 1;
+}
+.no {
+  font-size: var(--t-sm);
+  color: var(--brass);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.card h3 {
+  margin: 14px 0 10px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(24px, 2vw, 30px);
+  line-height: 1.15;
+}
+.card p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--stone);
+}
+.tags {
+  list-style: none;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 56px;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 18px;
 }
-.code { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.1em; }
-.icon :deep(svg) {
-  width: 44px;
-  height: 44px;
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: transform 0.7s var(--ease);
-}
-.card:hover .icon :deep(svg) { transform: rotate(-12deg) scale(1.1); }
-h3 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 21px;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-  margin-bottom: 12px;
-}
-.card p { color: var(--muted); font-size: 15px; font-weight: 300; }
-.tags { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
 .tags li {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 6px 10px;
-  border: 1px solid var(--line-2);
+  font-size: 12px;
+  padding: 3px 10px;
   border-radius: 999px;
-  color: var(--muted);
+  border: 1px solid var(--line-2);
+  color: var(--stone);
 }
-@media (max-width: 1080px) {
-  .grid { grid-template-columns: repeat(2, 1fr); }
+.cta {
+  margin-top: 28px;
 }
-@media (max-width: 720px) {
-  .head { grid-template-columns: 1fr; }
-  .grid { grid-template-columns: 1fr; }
-  .card__top { margin-bottom: 36px; }
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .head {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    padding: 20px;
+  }
 }
 </style>
