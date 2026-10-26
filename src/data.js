@@ -103,12 +103,23 @@ export const content = {
       ]
     },
     founder: {
-      label: 'Người đứng sau Nexora',
-      name: 'Hồ Minh Quang',
-      role: 'Nhà sáng lập',
-      quote: 'Mỗi website tôi làm đều là một lời giới thiệu về chính khách hàng của tôi, nên tôi luôn làm nó như làm cho thương hiệu của mình.',
-      bio: 'Hơn 5 năm thiết kế và xây dựng hệ thống thương mại điện tử cho thị trường Nhật Bản, nơi đòi hỏi khắt khe về chất lượng và từng chi tiết. Trực tiếp thực hiện website cho Thành Hưng Phát, AH Technology và nhiều doanh nghiệp khác, từ thiết kế, xây dựng đến vận hành.',
-      points: ['Làm việc trực tiếp với bạn từ đầu đến cuối', 'Tiêu chuẩn chất lượng Nhật Bản cho website của bạn', 'Hỗ trợ lâu dài sau bàn giao']
+      label: 'Đội ngũ Nexora',
+      title: 'Một người làm website thật đẹp, một người đưa khách hàng đến với nó.',
+      lead: 'Bạn làm việc trực tiếp với những người làm ra website của mình, từ buổi gặp đầu tiên đến sau khi bàn giao.',
+      members: [
+        {
+          photo: '/team-quang.jpg',
+          name: 'Hồ Minh Quang',
+          role: 'Nhà sáng lập, phụ trách thiết kế & xây dựng website',
+          bio: 'Hơn 5 năm thiết kế và xây dựng hệ thống thương mại điện tử cho thị trường Nhật Bản, nơi đòi hỏi khắt khe về chất lượng và từng chi tiết. Trực tiếp thực hiện website cho Thành Hưng Phát, AH Technology và nhiều doanh nghiệp khác.'
+        },
+        {
+          photo: '/team-hoang.jpg',
+          name: 'Phạm Huy Hoàng',
+          role: 'Phụ trách quảng cáo, marketing & SEO',
+          bio: 'Hơn 7 năm làm quảng cáo, marketing và SEO website. Giúp website không chỉ đẹp mà còn có khách tìm đến: lên top Google, chạy quảng cáo hiệu quả và đo lường từng lượt liên hệ.'
+        }
+      ]
     },
     process: {
       title: 'Hai tuần, từ ý tưởng đến website hoàn chỉnh.',
@@ -257,12 +268,23 @@ export const content = {
       ]
     },
     founder: {
-      label: 'The person behind Nexora',
-      name: 'Ho Minh Quang',
-      role: 'Founder',
-      quote: 'Every website I build is an introduction to my client, so I build it as carefully as I would my own brand.',
-      bio: 'More than 5 years designing and building e-commerce systems for the Japanese market, where quality and detail are non-negotiable. Personally delivered websites for Thanh Hung Phat, AH Technology and many other businesses, from design and build to ongoing care.',
-      points: ['You work with me directly, start to finish', 'Japanese-market quality standards for your website', 'Long-term support after handover']
+      label: 'The Nexora team',
+      title: 'One of us builds a beautiful website, the other brings customers to it.',
+      lead: 'You work directly with the people who build your website, from the first meeting to long after handover.',
+      members: [
+        {
+          photo: '/team-quang.jpg',
+          name: 'Ho Minh Quang',
+          role: 'Founder, website design & build',
+          bio: 'More than 5 years designing and building e-commerce systems for the Japanese market, where quality and detail are non-negotiable. Personally delivered websites for Thanh Hung Phat, AH Technology and many other businesses.'
+        },
+        {
+          photo: '/team-hoang.jpg',
+          name: 'Pham Huy Hoang',
+          role: 'Advertising, marketing & SEO',
+          bio: 'More than 7 years in advertising, marketing and website SEO. Makes sure your website is not only beautiful but found: ranking on Google, running effective ads and tracking every enquiry.'
+        }
+      ]
     },
     process: {
       title: 'Two weeks from idea to launch.',
